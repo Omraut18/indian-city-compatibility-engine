@@ -1,0 +1,11 @@
+city,state,affordability,career,business,cafes,fitness,nightlife,nature,climate,mobility,safety,social
+Pune,Maharashtra,7,8,8,9,9,7,6,7,8,8,9
+Mumbai,Maharashtra,3,10,9,10,9,10,4,7,10,7,10
+Dehradun,Uttarakhand,8,6,5,6,6,4,10,9,5,8,7
+Bengaluru,Karnataka,5,10,10,9,9,8,5,6,7,7,10
+Hyderabad,Telangana,7,9,8,8,8,7,5,7,8,8,9
+Jaipur,Rajasthan,8,7,6,8,7,7,8,8,7,7,8
+Chandigarh,Chandigarh,7,8,6,7,8,6,8,7,9,9,8
+Rishikesh,Uttarakhand,9,5,4,7,8,3,10,9,4,8,6
+Delhi,Delhi,9,8,9,8,8,9,4,6,10,6,9
+Ahmedabad,Gujarat,7,8,7,8,7,6,6,8,8,8,8
