@@ -1,20 +1,30 @@
 # 🏙️ Indian City Compatibility Engine
 
-An AI-inspired recommendation system that helps users find Indian cities that match their preferred lifestyle.
+### Find Indian cities that match the lifestyle you want.
 
-Instead of simply asking which city is "best", the system asks:
-
-> **"Which Indian city best matches the life I want?"**
-
-The user rates how important different lifestyle factors are, and the engine compares those preferences with city-level feature scores.
+🔴 **Live Demo:** https://indian-city-compatibility-engin.streamlit.app/
 
 ---
 
-## 🎯 Project Goal
+## 📌 About the Project
 
-The goal is to build a personalized city recommendation system based on **lifestyle compatibility** rather than simply ranking cities by population, GDP, or popularity.
+The Indian City Compatibility Engine is a data-driven recommendation system that helps users find Indian cities based on their personal lifestyle priorities.
 
-Users can prioritize factors such as:
+Instead of simply ranking cities by population, GDP, or cost of living, the system asks:
+
+> **"Based on the life I want, which Indian city should I actually live in?"**
+
+Users rate the importance of 11 lifestyle factors from 1–10, and the engine calculates how well each city matches those preferences.
+
+---
+
+## ⚙️ How It Works
+
+The system uses a hybrid recommendation approach.
+
+### 1. User Preferences
+
+Users rate:
 
 - 💰 Affordability
 - 💼 Career opportunities
@@ -28,27 +38,73 @@ Users can prioritize factors such as:
 - 🛡️ Safety
 - 🧑‍🤝‍🧑 Social life
 
-The system then calculates compatibility scores for each city and produces a personalized ranking.
+### 2. Compatibility Score
+
+Each city is compared against the user's preferences.
+
+The system gives greater influence to factors that the user considers more important.
+
+### 3. Cosine Similarity
+
+The system also uses cosine similarity to measure how similar the user's overall preference profile is to each city's feature profile.
+
+### 4. Hybrid Score
+
+The final score combines both approaches:
+
+**Hybrid Score = 80% Compatibility + 20% Preference Similarity**
+
+Cities are then ranked according to their final compatibility score.
 
 ---
 
-# ⚙️ How It Works
+## 🧠 Machine Learning / Data Concepts
 
-The recommendation pipeline is:
+This project uses:
+
+- Weighted scoring
+- Feature normalization
+- StandardScaler
+- Cosine similarity
+- Hybrid recommendation
+- Data validation
+- Feature engineering
+- Interactive data visualization
+
+---
+
+## 🛠️ Tech Stack
+
+- **Python**
+- **Pandas**
+- **NumPy**
+- **Scikit-learn**
+- **Streamlit**
+- **Plotly**
+- **Git & GitHub**
+
+---
+
+## 🗂️ Project Structure
 
 ```text
-User Preferences
-       ↓
-Preference Vector
-       ↓
-City Feature Data
-       ↓
-Feature Normalization
-       ↓
-Weighted Compatibility
-       ↓
-Cosine Similarity
-       ↓
-Hybrid Score
-       ↓
-City Recommendations
+City compatibility engine/
+│
+├── data/
+│   ├── raw_features.csv
+│   ├── affordability_raw.csv
+│   └── features_processed.csv
+│
+├── src/
+│   ├── app.py
+│   ├── hybrid.py
+│   ├── recommender.py
+│   ├── preferences.py
+│   ├── normalize_features.py
+│   ├── validate_data.py
+│   ├── run_engine.py
+│   └── similarity.py
+│
+├── .gitignore
+├── README.md
+└── requirements.txt
