@@ -1,186 +1,342 @@
-import streamlit as st
 import pandas as pd
 import numpy as np
+import streamlit as st
 import plotly.express as px
-
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics.pairwise import cosine_similarity
 
 
 # ============================================================
-# PAGE SETTINGS
+# PAGE CONFIG
 # ============================================================
 
 st.set_page_config(
-    page_title="City Compatibility Engine",
+    page_title="Indian City Compatibility Engine",
     page_icon="🏙️",
-    layout="centered"
+    layout="wide"
 )
 
 
 # ============================================================
-# TITLE
+# CUSTOM CSS
 # ============================================================
 
-st.title("🏙️ Indian City Compatibility Engine")
+st.markdown(
+    """
+    <style>
 
-st.write(
-    "Find Indian cities that match the lifestyle you want."
+    .stApp {
+        background: #0B0D12;
+    }
+
+    .block-container {
+        max-width: 1100px;
+        padding-top: 4rem;
+        padding-bottom: 3rem;
+    }
+
+    h1, h2, h3 {
+        color: #F8FAFC !important;
+    }
+
+    p {
+        color: #A7AFBD;
+    }
+
+    /* Hero */
+
+    .hero-label {
+        color: #A78BFA;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        margin-bottom: 0.5rem;
+    }
+
+    .hero-title {
+        color: #F8FAFC;
+        font-size: 2.4rem;
+        font-weight: 800;
+        line-height: 1.15;
+        margin-bottom: 0.5rem;
+    }
+
+    .hero-text {
+        color: #A7AFBD;
+        font-size: 1rem;
+        margin-bottom: 2.5rem;
+    }
+
+    /* Section headings */
+
+    .section-title {
+        color: #F8FAFC;
+        font-size: 1.35rem;
+        font-weight: 750;
+        margin-top: 1rem;
+        margin-bottom: 0.15rem;
+    }
+
+    .section-subtitle {
+        color: #7F8796;
+        font-size: 0.85rem;
+        margin-bottom: 1.2rem;
+    }
+
+    /* Slider */
+
+    div[data-baseweb="slider"] [role="slider"] {
+        background-color: #8B5CF6 !important;
+        border-color: #8B5CF6 !important;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18) !important;
+    }
+
+    /* Button */
+
+    .stButton > button {
+        background: linear-gradient(
+            135deg,
+            #8B5CF6,
+            #6366F1
+        ) !important;
+
+        color: white !important;
+        border: none !important;
+        border-radius: 10px !important;
+        font-weight: 750 !important;
+        padding: 0.65rem 1.25rem !important;
+        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.25);
+    }
+
+    .stButton > button:hover {
+        box-shadow: 0 10px 30px rgba(139, 92, 246, 0.35);
+    }
+
+    /* Result */
+
+    .result-city {
+        color: #F8FAFC;
+        font-size: 2rem;
+        font-weight: 850;
+    }
+
+    .result-score {
+        color: #A78BFA;
+        font-size: 2.4rem;
+        font-weight: 850;
+    }
+
+    .muted {
+        color: #7F8796;
+        font-size: 0.82rem;
+    }
+
+    hr {
+        border-color: #242936 !important;
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True
 )
-
-st.divider()
 
 
 # ============================================================
-# USER PREFERENCES
+# LOAD DATA
 # ============================================================
 
-st.subheader("🎯 Rate Your Priorities")
+@st.cache_data
+def load_data():
 
-st.write(
-    "1 = Not important  |  10 = Extremely important"
-)
-
-affordability = st.slider(
-    "💰 Affordability", 1, 10, 5
-)
-
-career = st.slider(
-    "💼 Career opportunities", 1, 10, 5
-)
-
-business = st.slider(
-    "🚀 Business / Startups", 1, 10, 5
-)
-
-cafes = st.slider(
-    "☕ Cafes & lifestyle", 1, 10, 5
-)
-
-fitness = st.slider(
-    "🏋️ Fitness", 1, 10, 5
-)
-
-nightlife = st.slider(
-    "🌃 Nightlife", 1, 10, 5
-)
-
-nature = st.slider(
-    "🌿 Nature", 1, 10, 5
-)
-
-climate = st.slider(
-    "🌤️ Climate", 1, 10, 5
-)
-
-mobility = st.slider(
-    "🚇 Transportation", 1, 10, 5
-)
-
-safety = st.slider(
-    "🛡️ Safety", 1, 10, 5
-)
-
-social = st.slider(
-    "🧑‍🤝‍🧑 Social life", 1, 10, 5
-)
-
-
-# ============================================================
-# FIND CITIES
-# ============================================================
-
-if st.button("🔍 Find My Cities"):
-
-    # --------------------------------------------------------
-    # LOAD DATA
-    # --------------------------------------------------------
-
-    df = pd.read_csv(
+    return pd.read_csv(
         "data/features_processed.csv"
     )
 
 
-    # --------------------------------------------------------
-    # FEATURES
-    # --------------------------------------------------------
-
-    features = [
-        "affordability",
-        "career",
-        "business",
-        "cafes",
-        "fitness",
-        "nightlife",
-        "nature",
-        "climate",
-        "mobility",
-        "safety",
-        "social"
-    ]
+df = load_data()
 
 
-    # --------------------------------------------------------
-    # DISPLAY NAMES
-    # --------------------------------------------------------
+# ============================================================
+# FEATURES
+# ============================================================
 
-    feature_names = {
+features = [
+    "affordability",
+    "career",
+    "business",
+    "cafes",
+    "fitness",
+    "nightlife",
+    "nature",
+    "climate",
+    "mobility",
+    "safety",
+    "social"
+]
 
-        "affordability": "Affordability",
-        "career": "Career",
-        "business": "Business",
-        "cafes": "Cafes",
-        "fitness": "Fitness",
-        "nightlife": "Nightlife",
-        "nature": "Nature",
-        "climate": "Climate",
-        "mobility": "Mobility",
-        "safety": "Safety",
-        "social": "Social life"
+
+feature_labels = {
+    "affordability": "💰 Affordability",
+    "career": "💼 Career opportunities",
+    "business": "🚀 Business / Startups",
+    "cafes": "☕ Cafes & lifestyle",
+    "fitness": "🏋️ Fitness",
+    "nightlife": "🌃 Nightlife",
+    "nature": "🌿 Nature",
+    "climate": "🌤️ Climate",
+    "mobility": "🚇 Transportation",
+    "safety": "🛡️ Safety",
+    "social": "🧑‍🤝‍🧑 Social life"
+}
+
+
+# ============================================================
+# HERO
+# ============================================================
+
+st.markdown(
+    '<div class="hero-label">AI-POWERED CITY RECOMMENDER</div>',
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    '<div class="hero-title">🏙️ Indian City Compatibility Engine</div>',
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    '<div class="hero-text">'
+    'Find Indian cities that match the life you actually want.'
+    '</div>',
+    unsafe_allow_html=True
+)
+
+
+# ============================================================
+# LIFESTYLE PRIORITIES
+# ============================================================
+
+st.markdown(
+    '<div class="section-title">🎯 Your lifestyle priorities</div>',
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    '<div class="section-subtitle">'
+    'Rate how important each factor is to you.'
+    '</div>',
+    unsafe_allow_html=True
+)
+
+
+if "preferences" not in st.session_state:
+
+    st.session_state.preferences = {
+        feature: 5.0
+        for feature in features
     }
 
 
-    # --------------------------------------------------------
-    # USER PREFERENCES
-    # --------------------------------------------------------
+left_features = features[:6]
+right_features = features[6:]
 
-    user_preferences = {
 
-        "affordability": affordability,
-        "career": career,
-        "business": business,
-        "cafes": cafes,
-        "fitness": fitness,
-        "nightlife": nightlife,
-        "nature": nature,
-        "climate": climate,
-        "mobility": mobility,
-        "safety": safety,
-        "social": social
-    }
+col1, col2 = st.columns(
+    2,
+    gap="large"
+)
+
+
+# ============================================================
+# LEFT SLIDERS
+# ============================================================
+
+with col1:
+
+    for feature in left_features:
+
+        value = st.slider(
+            feature_labels[feature],
+            min_value=1.0,
+            max_value=10.0,
+            value=float(
+                st.session_state.preferences[feature]
+            ),
+            step=1.0,
+            key=f"slider_{feature}"
+        )
+
+        st.session_state.preferences[feature] = value
+
+
+# ============================================================
+# RIGHT SLIDERS
+# ============================================================
+
+with col2:
+
+    for feature in right_features:
+
+        value = st.slider(
+            feature_labels[feature],
+            min_value=1.0,
+            max_value=10.0,
+            value=float(
+                st.session_state.preferences[feature]
+            ),
+            step=1.0,
+            key=f"slider_{feature}"
+        )
+
+        st.session_state.preferences[feature] = value
+
+
+st.markdown(
+    '<div class="muted">'
+    '1 = Not important • 10 = Extremely important'
+    '</div>',
+    unsafe_allow_html=True
+)
+
+st.write("")
+
+
+# ============================================================
+# RUN ENGINE
+# ============================================================
+
+run_engine = st.button(
+    "✨ Find My City Matches",
+    type="primary"
+)
+
+
+if run_engine:
+
+    preferences = st.session_state.preferences
 
 
     # --------------------------------------------------------
     # USER VECTOR
     # --------------------------------------------------------
 
-    user_vector = np.array([
-        user_preferences[feature]
-        for feature in features
-    ]).reshape(1, -1)
+    user_vector = np.array(
+        [
+            preferences[feature]
+            for feature in features
+        ]
+    ).reshape(1, -1)
 
 
     # --------------------------------------------------------
     # CITY MATRIX
     # --------------------------------------------------------
 
-    city_matrix = df[
-        features
-    ].values
+    city_matrix = df[features].values
 
 
     # --------------------------------------------------------
-    # STANDARDIZATION
+    # STANDARDIZE
     # --------------------------------------------------------
 
     scaler = StandardScaler()
@@ -195,7 +351,7 @@ if st.button("🔍 Find My Cities"):
 
 
     # --------------------------------------------------------
-    # CALCULATE SCORES
+    # CALCULATE CITY SCORES
     # --------------------------------------------------------
 
     results = []
@@ -205,154 +361,101 @@ if st.button("🔍 Find My Cities"):
         df.iterrows()
     ):
 
-        contributions = {}
-
         total_score = 0
         total_weight = 0
 
+        contributions = {}
 
-        # ====================================================
-        # COMPATIBILITY SCORE
-        # ====================================================
+
+        # Weighted compatibility
 
         for feature in features:
 
-            preference = user_preferences[
-                feature
-            ]
-
-            city_score = city[
-                feature
-            ]
-
-
-            # Difference between what user wants
-            # and what the city provides
-
-            difference = abs(
-                preference - city_score
-            )
-
-
-            # Convert difference into
-            # a 1-10 match score
+            preference = preferences[feature]
+            city_score = city[feature]
 
             match_score = (
-                10 - difference
+                10 - abs(
+                    preference - city_score
+                )
             )
-
-
-            # Important preferences
-            # receive more weight
 
             contribution = (
                 preference * match_score
             )
 
-
-            contributions[
-                feature
-            ] = contribution
-
-
             total_score += contribution
-
             total_weight += preference
+
+            contributions[feature] = contribution
 
 
         compatibility = (
-            total_score /
-            total_weight
+            total_score / total_weight
         )
 
 
-        # ====================================================
-        # COSINE SIMILARITY
-        # ====================================================
+        # Cosine similarity
 
         similarity = cosine_similarity(
             user_vector_scaled,
-            city_matrix_scaled[
-                i
-            ].reshape(1, -1)
+            city_matrix_scaled[i].reshape(1, -1)
         )[0][0]
 
-
-        # Convert -1 to +1
-        # into 0 to 10
 
         similarity_score = (
             (similarity + 1) / 2
         ) * 10
 
 
-        # ====================================================
-        # HYBRID SCORE
-        # ====================================================
+        # Hybrid score
+        # 80% compatibility
+        # 20% similarity
 
         hybrid_score = (
             0.8 * compatibility
-            +
-            0.2 * similarity_score
+            + 0.2 * similarity_score
         )
 
 
-        # ====================================================
-        # STRONGEST / WEAKEST MATCHES
-        # ====================================================
-
-        strongest = sorted(
-            contributions.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )[:3]
-
-
-        weakest = sorted(
-            contributions.items(),
-            key=lambda x: x[1]
-        )[:3]
-
-
-        # ====================================================
-        # SAVE RESULT
-        # ====================================================
-
-        results.append({
-
-            "city": city["city"],
-
-            "compatibility":
-                compatibility,
-
-            "similarity":
-                similarity_score,
-
-            "hybrid":
-                hybrid_score,
-
-            "strongest":
-                strongest,
-
-            "weakest":
-                weakest
-        })
+        results.append(
+            {
+                "city": city["city"],
+                "compatibility": compatibility,
+                "similarity": similarity_score,
+                "hybrid": hybrid_score,
+                "contributions": contributions
+            }
+        )
 
 
     # --------------------------------------------------------
-    # RESULTS DATAFRAME
+    # SORT RESULTS
     # --------------------------------------------------------
 
-    results = pd.DataFrame(
-        results
+    results = sorted(
+        results,
+        key=lambda x: x["hybrid"],
+        reverse=True
     )
 
 
-    results = results.sort_values(
-        "hybrid",
-        ascending=False
-    ).reset_index(
-        drop=True
+    # ========================================================
+    # RESULTS
+    # ========================================================
+
+    st.divider()
+
+    st.markdown(
+        '<div class="section-title">🏆 Your city matches</div>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        '<div class="section-subtitle">'
+        'Based on the lifestyle priorities you selected.'
+        '</div>',
+        unsafe_allow_html=True
     )
 
 
@@ -360,244 +463,213 @@ if st.button("🔍 Find My Cities"):
     # TOP CITY
     # ========================================================
 
-    top_city = results.iloc[0]
+    top = results[0]
 
 
-    st.divider()
-
-    st.subheader(
-        "🏆 Your Top City Match"
+    top_col1, top_col2 = st.columns(
+        [3, 1]
     )
 
 
-    st.markdown(
-        f"# 🏙️ {top_city['city']}"
-    )
-
-
-    st.metric(
-        "Compatibility Score",
-        f"{top_city['hybrid']:.2f} / 10"
-    )
-
-
-    st.progress(
-        min(
-            top_city["hybrid"] / 10,
-            1.0
-        )
-    )
-
-
-    st.write(
-        f"**Compatibility:** "
-        f"{top_city['compatibility']:.2f}/10"
-        f"  |  "
-        f"**Preference similarity:** "
-        f"{top_city['similarity']:.2f}/10"
-    )
-
-
-    # ========================================================
-    # STRONGEST MATCHES
-    # ========================================================
-
-    st.markdown(
-        "### 🟢 Strongest matches"
-    )
-
-
-    strongest_text = " • ".join(
-        feature_names[feature]
-        for feature, _ in
-        top_city["strongest"]
-    )
-
-
-    st.success(
-        strongest_text
-    )
-
-
-    # ========================================================
-    # POTENTIAL DRAWBACKS
-    # ========================================================
-
-    st.markdown(
-        "### 🟠 Potential drawbacks"
-    )
-
-
-    weakest_text = " • ".join(
-        feature_names[feature]
-        for feature, _ in
-        top_city["weakest"]
-    )
-
-
-    st.warning(
-        weakest_text
-    )
-
-
-    st.divider()
-
-
-    # ========================================================
-    # OTHER CITIES
-    # ========================================================
-
-    st.subheader(
-        "🏙️ Other Compatible Cities"
-    )
-
-
-    for rank, (_, row) in enumerate(
-        results.iloc[1:5].iterrows(),
-        start=2
-    ):
+    with top_col1:
 
         st.markdown(
-            f"## #{rank} 🏙️ {row['city']}"
+            '<div class="muted">'
+            'TOP COMPATIBILITY MATCH'
+            '</div>',
+            unsafe_allow_html=True
         )
 
+        st.markdown(
+            f'<div class="result-city">'
+            f'🏙️ {top["city"]}'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+
+
+    with top_col2:
+
+        st.markdown(
+            '<div class="muted">HYBRID SCORE</div>',
+            unsafe_allow_html=True
+        )
+
+        st.markdown(
+            f'<div class="result-score">'
+            f'{top["hybrid"]:.2f}/10'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+
+
+    st.write("")
+
+
+    score1, score2 = st.columns(2)
+
+
+    with score1:
 
         st.metric(
-            "Compatibility",
-            f"{row['hybrid']:.2f} / 10"
+            "Weighted compatibility",
+            f'{top["compatibility"]:.2f}/10'
         )
 
 
-        st.progress(
-            min(
-                row["hybrid"] / 10,
-                1.0
+    with score2:
+
+        st.metric(
+            "Cosine similarity",
+            f'{top["similarity"]:.2f}/10'
+        )
+
+
+    # ========================================================
+    # STRONGEST / WEAKEST
+    # ========================================================
+
+    contributions = top["contributions"]
+
+
+    strongest = sorted(
+        contributions.items(),
+        key=lambda x: x[1],
+        reverse=True
+    )[:3]
+
+
+    weakest = sorted(
+        contributions.items(),
+        key=lambda x: x[1]
+    )[:3]
+
+
+    st.write("")
+
+
+    strong_col, weak_col = st.columns(2)
+
+
+    with strong_col:
+
+        st.subheader("🔥 Strongest matches")
+
+        for feature, _ in strongest:
+
+            st.write(
+                f"• {feature_labels[feature]}"
             )
-        )
 
 
-        st.write(
-            f"**Compatibility:** "
-            f"{row['compatibility']:.2f}/10"
-            f"  |  "
-            f"**Preference similarity:** "
-            f"{row['similarity']:.2f}/10"
-        )
+    with weak_col:
 
+        st.subheader("⚠️ Potential trade-offs")
 
-        st.divider()
+        for feature, _ in weakest:
+
+            st.write(
+                f"• {feature_labels[feature]}"
+            )
 
 
     # ========================================================
-    # FEATURE BREAKDOWN
+    # RANKING TABLE
     # ========================================================
 
-    st.subheader(
-        "🔎 Feature-by-Feature Breakdown"
+    st.divider()
+
+    st.markdown(
+        '<div class="section-title">📊 City rankings</div>',
+        unsafe_allow_html=True
     )
 
 
-    st.write(
-        "See how each city performs across "
-        "every lifestyle factor."
+    ranking_data = []
+
+
+    for rank, result in enumerate(
+        results,
+        start=1
+    ):
+
+        ranking_data.append(
+            {
+                "Rank": rank,
+                "City": result["city"],
+                "Hybrid score": round(
+                    result["hybrid"],
+                    2
+                ),
+                "Compatibility": round(
+                    result["compatibility"],
+                    2
+                ),
+                "Similarity": round(
+                    result["similarity"],
+                    2
+                )
+            }
+        )
+
+
+    ranking_df = pd.DataFrame(
+        ranking_data
     )
-
-
-    selected_city = st.selectbox(
-        "Choose a city",
-        results["city"].tolist()
-    )
-
-
-    selected_row = df[
-        df["city"] == selected_city
-    ].iloc[0]
-
-
-    breakdown = pd.DataFrame({
-
-        "Feature": [
-            feature_names[feature]
-            for feature in features
-        ],
-
-        "City Score": [
-            selected_row[feature]
-            for feature in features
-        ],
-
-        "Your Priority": [
-            user_preferences[feature]
-            for feature in features
-        ]
-    })
 
 
     st.dataframe(
-        breakdown,
-        hide_index=True,
+        ranking_df,
         use_container_width=True,
-
-        column_config={
-
-            "City Score":
-                st.column_config.ProgressColumn(
-                    "🏙️ City Score",
-                    min_value=0,
-                    max_value=10,
-                    format="%.1f"
-                ),
-
-            "Your Priority":
-                st.column_config.ProgressColumn(
-                    "🎯 Your Priority",
-                    min_value=0,
-                    max_value=10,
-                    format="%.0f"
-                )
-        }
+        hide_index=True
     )
 
 
     # ========================================================
-    # INDIVIDUAL CITY CHART
+    # TOP 5 CHART
     # ========================================================
 
-    st.subheader(
-        f"📊 {selected_city} — Feature Scores"
-    )
+    st.write("")
 
 
-    chart_data = pd.DataFrame({
-
-        "Feature": [
-            feature_names[feature]
-            for feature in features
-        ],
-
-        "Score": [
-            selected_row[feature]
-            for feature in features
-        ]
-    })
+    top5 = ranking_df.head(5)
 
 
     fig = px.bar(
-        chart_data,
+        top5,
+        x="City",
+        y="Hybrid score",
+        text="Hybrid score",
+        title="Top 5 city compatibility scores"
+    )
 
-        x="Feature",
 
-        y="Score",
-
-        range_y=[0, 10],
-
-        title=f"{selected_city} Lifestyle Scores"
+    fig.update_traces(
+        marker_color="#8B5CF6",
+        textposition="outside"
     )
 
 
     fig.update_layout(
-        xaxis_title="",
-        yaxis_title="Score"
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(
+            color="#F8FAFC"
+        ),
+        yaxis=dict(
+            range=[0, 10],
+            gridcolor="#252A35"
+        ),
+        xaxis=dict(
+            gridcolor="rgba(0,0,0,0)"
+        ),
+        margin=dict(
+            l=20,
+            r=20,
+            t=60,
+            b=20
+        )
     )
 
 
@@ -607,80 +679,86 @@ if st.button("🔍 Find My Cities"):
     )
 
 
+    # ========================================================
+    # CITY EXPLORER
+    # ========================================================
+
     st.divider()
 
-
-    # ========================================================
-    # TOP 5 COMPARISON
-    # ========================================================
-
-    st.subheader(
-        "📈 Compare Top 5 Cities"
+    st.markdown(
+        '<div class="section-title">🔎 Explore a city</div>',
+        unsafe_allow_html=True
     )
 
 
-    top_cities = results.head(5)[
-        "city"
-    ].tolist()
-
-
-    comparison_data = df[
-        df["city"].isin(
-            top_cities
-        )
-    ][
-        [
-            "city",
-            "affordability",
-            "career",
-            "business",
-            "cafes",
-            "fitness",
-            "nightlife",
-            "nature",
-            "climate",
-            "mobility",
-            "safety",
-            "social"
-        ]
+    city_names = [
+        result["city"]
+        for result in results
     ]
 
 
-    comparison_data = comparison_data.melt(
-        id_vars="city",
-        var_name="feature",
-        value_name="score"
+    selected_city = st.selectbox(
+        "Choose a city",
+        city_names
     )
 
 
-    comparison_data["feature"] = (
-        comparison_data["feature"]
-        .map(feature_names)
+    selected_row = df[
+        df["city"] == selected_city
+    ].iloc[0]
+
+
+    breakdown = pd.DataFrame(
+        {
+            "Feature": [
+                feature_labels[feature]
+                for feature in features
+            ],
+            "Score": [
+                selected_row[feature]
+                for feature in features
+            ]
+        }
     )
 
 
     fig2 = px.bar(
+        breakdown,
+        x="Score",
+        y="Feature",
+        orientation="h",
+        text="Score",
+        title=f"{selected_city} — feature profile"
+    )
 
-        comparison_data,
 
-        x="feature",
-
-        y="score",
-
-        color="city",
-
-        barmode="group",
-
-        range_y=[0, 10],
-
-        title="Top 5 Cities — Lifestyle Comparison"
+    fig2.update_traces(
+        marker_color="#6366F1",
+        texttemplate="%{text:.1f}",
+        textposition="outside"
     )
 
 
     fig2.update_layout(
-        xaxis_title="",
-        yaxis_title="Score",
-        legend_title="City"
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(
+            color="#F8FAFC"
+        ),
+        xaxis=dict(
+            range=[0, 10],
+            gridcolor="#252A35"
+        ),
+        yaxis=dict(
+            gridcolor="rgba(0,0,0,0)"
+        ),
+        margin=dict(
+            l=20,
+            r=50,
+            t=60,
+            b=20
+        )
     )
 
 
@@ -691,18 +769,47 @@ if st.button("🔍 Find My Cities"):
 
 
     # ========================================================
-    # FOOTER
+    # USER PROFILE
     # ========================================================
 
     st.divider()
 
-
-    st.caption(
-        "💡 Compatibility is based on your stated "
-        "priorities and processed city feature scores."
+    st.markdown(
+        '<div class="section-title">🎯 Your preference profile</div>',
+        unsafe_allow_html=True
     )
 
-    st.caption(
-        "⚙️ Hybrid score = 80% compatibility + "
-        "20% preference similarity."
+
+    preference_df = pd.DataFrame(
+        {
+            "Feature": [
+                feature_labels[feature]
+                for feature in features
+            ],
+            "Importance": [
+                preferences[feature]
+                for feature in features
+            ]
+        }
     )
+
+
+    st.dataframe(
+        preference_df,
+        use_container_width=True,
+        hide_index=True
+    )
+
+
+# ============================================================
+# FOOTER
+# ============================================================
+
+st.write("")
+
+st.divider()
+
+st.caption(
+    "AI-powered lifestyle compatibility engine • "
+    "Python • Pandas • Scikit-learn • Plotly • Streamlit"
+)
